@@ -2,7 +2,7 @@
 
 
 - [Hindroid Replication](#hindroid-replication)
-  - [1. Malware Classification](#1-malware-classification)
+  - [1. Malware Classification Problem](#1-malware-classification-problem)
   - [2. Datasets](#2-datasets)
     - [2.1 Datasets from Hindroid Paper](#21-datasets-from-hindroid-paper)
     - [2.2 Datasets Used in Replication](#22-datasets-used-in-replication)
@@ -17,7 +17,7 @@
     - [4.5 Applicability](#45-applicability)
 
 
-## 1. Malware Classification
+## 1. Malware Classification Problem
 
 Android system has always been known for its openness, attracting a great amount of developers to design and implement Android applications (apps). However, this also brings serious problems to cybersecurity by introducing a channel for attackers to publish malwares that damage users. In *Hindroid* paper, it is mentioned that for every five Android applications, one malware hides itself among benign apps. To create more friendly environment and experiences for Android users, efforts have been put in to classify harmful apps from benign ones before they could have hurt users. 
 
@@ -67,13 +67,13 @@ Our dataset originates from mainly two sources, apkpure.com for the benign apps 
 
 ### 4.2 Data Privacy
 
-As apkpure.com is a public platform for Android application installation, and all applications are open, we avoid violating data privacy. However, we will encrypt related app and developers names to be careful.
+As apkpure.com is a public platform for Android application installation, and all applications are open, we avoid violating data privacy. However, we can encrypt related app and developers names if necessary.
 
 ### 4.3 Schema
 
-Our decompiled apk files will be organized in a way shown below to keep Smali code files and AndroidManifest.xml only. In this way, we can save more storage space.
+Our decompiled apk files will be organized in a way shown below to keep Smali code files and AndroidManifest.xml only. Although not a structured tabular form, we can organize our observations by its unit in this way. That being said, our unit of observation is an application. In this way, we can save more storage space.
 
-``` source
+``` schema
   data/
   |-- Grubhub/
   |   |-- AndroidManifest.xml
@@ -85,22 +85,22 @@ Our decompiled apk files will be organized in a way shown below to keep Smali co
   |   |-- Smali/
   |   |   |-- .smali
   |   |   |-- ...
+  |-- ...
   ```
 
 ### 4.4 Pipeline
 
-- Create `apps.csv` that contains basic information for each app with `sitemap.xml`. This spreadsheet is used for sampling methods except for random sampling, and will include information of the application's url, publish date, last update date for now.
+- Create `apps.csv` that contains basic information for each app with `sitemap.xml`. This spreadsheet is used for more sampling methods, and will include information of the application's url, publish date, last update date for now.
 
-- Sample from `sitemap.xml` according to `apps.csv`. For now, we will use random sampling and create a sample with size similar to malware sample size.
+- Sample from `sitemap.xml` according to `apps.csv`. For now, we will use random sampling in each app category to create a sample with size similar to malware sample size.
 
-- Create `confic.json`, an example shown below, based on our chosen sample of benign applications. Download applications in our sample from apkpure.com.
+- Create `config.json`, an example shown below, including information of `sitemap`, our sitemap url, `path`, directory name that we store our Smali code files, and `num`, number of sample applications we want in each category. Download applications in our sample from apkpure.com.
+
 ```json
   {
-  "urls": [
-      "https://apkpure.com/grubhub-local-food-delivery-restaurant-takeout/com.grubhub.android",
-      "https://apkpure.com/amtrak/com.amtrak.rider"
-      ],
-  "path": "data"  
+  "sitemap": "https://apkpure.com/sitemap.xml",
+  "outpath": "data",
+  "num": 10  
   }
   ```
 
@@ -110,5 +110,5 @@ Our decompiled apk files will be organized in a way shown below to keep Smali co
 
 ### 4.5 Applicability
 
-Possible similar data sources include other third-party Android application store and websites, or even the Google Playstore. However, our pipeline may have limited applicability depending on what other data sources we are using. For Google Playstore, it is harder to scrape and download application files as an account is required. On the other hand, our pipeline can possibly raise legal issues or privacy concern depending on each site's policy. It is important to check each Android application store or website before employing our pipeline.
+Possible similar data sources include other third-party Android application store and websites, or even the Google Playstore. Our pipeline is useful as long as a `sitemap.xml` exists for the website/store. However, our pipeline may have limited applicability depending on what other data sources we are using. For Google Playstore, it is harder to scrape and download application files as an account is required. On the other hand, our pipeline can possibly raise legal issues or privacy concern depending on each site's policy. It is important to check each Android application store or website before employing our pipeline.
 
