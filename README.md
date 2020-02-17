@@ -15,6 +15,9 @@
     - [4.3 Schema](#43-schema)
     - [4.4 Pipeline](#44-pipeline)
     - [4.5 Applicability](#45-applicability)
+  - [5. Graphs](#5-graphs)
+  - [6. EDA](#6-eda)
+  - [7. Baseline Model](#7-baseline-model)
 
 
 ## 1. Malware Classification Problem
@@ -98,9 +101,10 @@ Our decompiled apk files will be organized in a way shown below to keep Smali co
 
 ```json
   {
-  "sitemap": "https://apkpure.com/sitemap.xml",
-  "outpath": "data",
-  "num": 10  
+    "sitemap": "https://apkpure.com/sitemap.xml",
+    "outpath": "data",
+    "categories": [],
+    "num_per_cat": 10  
   }
   ```
 
@@ -112,3 +116,38 @@ Our decompiled apk files will be organized in a way shown below to keep Smali co
 
 Possible similar data sources include other third-party Android application store and websites, or even the Google Playstore. Our pipeline is useful as long as a `sitemap.xml` exists for the website/store. However, our pipeline may have limited applicability depending on what other data sources we are using. For Google Playstore, it is harder to scrape and download application files as an account is required. On the other hand, our pipeline can possibly raise legal issues or privacy concern depending on each site's policy. It is important to check each Android application store or website before employing our pipeline.
 
+## 5. Graphs
+
+This section explains the definition and extraction of each graph/matrix used in the Hindroid paper.
+
+**A** <br/>
+This is a graph that explains relationship between apps and API calls. The nodes in this graph involve possible Apps and API calls. The edge of A, which is a<sub>ij</sub>, tells us that App i includes API j. We will create the graph by running through apps and find API calls included in each app.
+
+**B** <br/>
+This is a graph that explains relationships among API calls. Each node in this graph represents an API call. The edge in B, which is b<sub>ij</sub>, represents API i and API j exist in the same code block in at least one app. We will create the graph by running through all apps and find API calls that exist between `.method` and `.endmethod`.
+
+**P** <br/>
+This is another graph that explains relationships among API calls. Each node in this graph represents an API call. The edge in P, which is p<sub>ij</sub>, represents API i and API j exist in the same package in at least one app. We will create this graph by running through all apps and find API calls that include the same package name, which is after input type and before `;->`.
+
+**I** <br/>
+This is again another graph that explains relationships among API calls. Each node in this graph represents an API call. The edge in I, which is i<sub>ij</sub>, represents API i and API j make use of the same invoke method. We will create this graph by running through all apps and check invoke type at the beginning of each API call, for example `invoke-direct`.
+
+## 6. EDA
+
+The feature we extract include:
+**num_api** : total number of API calls in the app
+**unique_api** : total number of *unique* API calls in the app
+**num_method** : total number of code blocks in the app
+**unique_method** : total number of *unique* code blocks in the app
+**most_used_package** : the package that is most called in the app
+
+####IMPORTANT:
+**As there are still bugs in current code for data ingestion (specifically decompiling apk files), and that I have trouble applying my functions on malwares provided in `dataset` directory, the EDA here only includes small portion of benign apps downloaded. However the code for assignment 2 is complete and will definitely work as soon as the apk files can be decompiled successfully.**
+
+By exploring our small sample, we have 25 total apps, and that the average number of total API calls is 88,235, while the average number of unique API calls is 36,235. The average total number of code blocks is 26,214, while the average number of unique code blocks is 24,828, which does not differ from the total number too much. 19 of the 25 apps here have `Ljava/lang/StringBuilder` as their mostly used library.
+
+## 7. Baseline Model
+
+The baseline model uses features extracted above, along with each of Logistic Regression, Random Forest, and Gradient Boost Classifier, to classify whether the app is a malware or a benign app.
+
+The metric chosen is the number of false negative divided by number of total apps. This specific metric is selected because in a malware classification, we care more about malwares that are accidently classified as benign.

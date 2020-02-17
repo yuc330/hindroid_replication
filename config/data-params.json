@@ -1,5 +1,6 @@
 {
     "sitemap": "https://apkpure.com/sitemap.xml",
     "outpath": "data",
-    "num": 10  
+    "num": 10,
+    "max_app":30
     }
