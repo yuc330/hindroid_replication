@@ -94,9 +94,10 @@ def download_apk(download_page_link, app_link, outpath): #download the apk file
 def decompile(app_link, outpath): #decompile apk files and remove .apk
     app_name = app_link.split('/')[-1]
     subprocess.call(['cd', outpath]) 
-    subprocess.call(['apktool', 'd', app_name +".apk"])
-    if os.path.exists(app_name +".apk"): #delete apkfiles
-        os.remove(app_name +".apk")
+    name = os.path.join(outpath+'/', link.split('/')[-1]+".apk") 
+    subprocess.call(['apktool', 'd', name])
+    if os.path.exists(name +".apk"): #delete apkfiles
+        os.remove(name +".apk")
 
 def get_smali_code(app_urls, outpath): #download and decompile all application urls
     for url in app_urls:
