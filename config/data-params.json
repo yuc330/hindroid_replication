@@ -1,6 +1,7 @@
 {
     "sitemap": "https://apkpure.com/sitemap.xml",
     "outpath": "data",
+    "categories":["dating", "education"],
     "num": 10,
     "max_app":30
     }

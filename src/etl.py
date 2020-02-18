@@ -15,24 +15,25 @@ from sklearn.metrics import confusion_matrix
 
 #Part3.1 Create sample of android apps
 
-def get_submap_xmls(sitemap): #get a list of submap xmls from sitemap
+def get_submap_xmls(sitemap):
     resp = requests.get(sitemap)
-    data = resp.content
-    soup = BeautifulSoup(data, 'xml')
-    loc_list = soup.find_all('loc') 
-    xml_lst = []
-    for link in loc_list:
-        xml_lst += [link.get_text()]
-    return xml_lst
+    soup = BeautifulSoup(resp.content, 'xml')
+    url = soup.find_all('loc') 
+    result = []
+    for link in url:
+        result += [link.get_text()]
+    return result
+#extract categories list
+def category(link_lst):
+    result = [] 
+    for xml in link_lst:
+        result += [re.search('(?<=sitemaps\/)(.*)(?=\-\d)|(?<=sitemaps\/)(.*)(?=\.xml)',xml).groups()[1]]
+    return [i for i in result if i] 
 
-def category(xml_lst): #get a list of category
-    cat = [] 
-    for xml in xml_lst:
-        cat += [re.search('(?<=sitemaps\/)(.*)(?=\-\d)|(?<=sitemaps\/)(.*)(?=\.xml)',xml).groups()[1]]
-    return [i for i in category if i] #remove none value
 
-def sample_from_cat(categories): #choose the first submap of each category
-    apps = []
+#get all the gz files from each categories
+def sample_from_cat(categories): 
+    soups = []
     for c in categories:
         url = 'https://apkpure.com/sitemaps/{}.xml.gz'.format(c)
         try:
@@ -40,26 +41,34 @@ def sample_from_cat(categories): #choose the first submap of each category
         except:
             url = 'https://apkpure.com/sitemaps/{}.xml.gz'.format(c+'-1')
             r = requests.get(url)
-    
+        #decompress the gz file and parse xml
         data = gzip.decompress(r.content)
-        apps.append(data)
-    return apps
-
-#TODO: categories selection
-def get_app_urls(sitemap): #get all app urls of our sample
-    xmls = get_submap_xmls(sitemap)
-    categories = category(xmls)
-    samples = sample_from_cat(categories)
-    apps = []
-    for sample in samples:
-        soup = bs4.BeautifulSoup(sample ,features = 'lxml')
+        soup = BeautifulSoup(data,features = 'lxml')
+        soups.append(soup)
+    return soups
+def get_app_urls(sitemap,cat,number):
+    xmls = get_xmls(sitemap)
+    
+    if cat == 'all':
+        categories = category(xmls)
+    elif type(cat) == int:
+        categories = random.choices(category(xmls), k = cat)
+    else:
+        categories = cat
         
-         #find all urls stored in loc, which also return image:loc
-        loc_urls = soup.find_all(re.compile('loc'))
-        lst = [] #list of url for apps
-        for i in loc_urls:
-            if re.match('<loc>', str(i)): #select only <loc>
-                lst += [re.search('(?<=<loc>)(.*)(?=<\/loc>)', str(i)).group()]
+    soups = sample_from_cat(categories)
+    apps = []
+    for soup in soups:
+        count = 0
+        sp = soup.find_all(re.compile('loc')) 
+        lst = [] 
+        for i in sp:
+            if re.match('<loc>', str(i)) and count < number:
+                try:
+                    lst += [re.search('(?<=<loc>)(https:\/\/apkpure.com\/.*?\/.*[a-zA-Z\d].*)(?=<\/loc>)', str(i)).group()] #find all urls storec in loc
+                    count += 1
+                except:
+                    continue
         apps += lst
     return apps
 
