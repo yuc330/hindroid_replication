@@ -133,6 +133,7 @@ This is another graph that explains relationships among API calls. Each node in 
 This is again another graph that explains relationships among API calls. Each node in this graph represents an API call. The edge in I, which is i<sub>ij</sub>, represents API i and API j make use of the same invoke method. We will create this graph by running through all apps and check invoke type at the beginning of each API call, for example `invoke-direct`.
 
 ## 6. EDA
+This part is done in HIN notebook (a little messy).
 
 The feature we extract include:
 **num_api** : total number of API calls in the app
@@ -141,13 +142,11 @@ The feature we extract include:
 **unique_method** : total number of *unique* code blocks in the app
 **most_used_package** : the package that is most called in the app
 
-####IMPORTANT:
-**As there are still bugs in current code for data ingestion (specifically decompiling apk files), and that I have trouble applying my functions on malwares provided in `dataset` directory, the EDA here only includes small portion of benign apps downloaded. However the code for assignment 2 is complete and will definitely work as soon as the apk files can be decompiled successfully.**
 
-By exploring our small sample, we have 25 total apps, and that the average number of total API calls is 88,235, while the average number of unique API calls is 36,235. The average total number of code blocks is 26,214, while the average number of unique code blocks is 24,828, which does not differ from the total number too much. 19 of the 25 apps here have `Ljava/lang/StringBuilder` as their mostly used library.
+By exploring our small sample, we have 40 total apps, half of them education type and the other half dating. The average number of total API calls is 119,750, while the average number of unique API calls is 50,280. The average total number of code blocks is 35,214, while the average number of unique code blocks is 33,490, which does not differ from the total number too much. 29 of the 40 apps here have `Ljava/lang/StringBuilder` as their mostly used library.
 
 ## 7. Baseline Model
 
-The baseline model uses features extracted above, along with each of Logistic Regression, Random Forest, and Gradient Boost Classifier, to classify whether the app is a malware or a benign app.
+The baseline model uses features extracted above, along with each of Logistic Regression, Random Forest, and Gradient Boost Classifier, to classify whether the app is for educational purpose or is a dating app.
 
-The metric chosen is the number of false negative divided by number of total apps. This specific metric is selected because in a malware classification, we care more about malwares that are accidently classified as benign.
+The metric chosen is the number of false negative divided by number of total apps. This specific metric is selected because in a we will be doing malware classification in the future, and we care more about malwares that are accidently classified as malware.

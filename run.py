@@ -7,34 +7,39 @@ if __name__ == "__main__":
     train = json.load('config/data-params.json')
     sitemap = train['sitemap']
     train_outpath = train['outpath']
-    max_app = train['max_app']
+    num = train['num']
+    cat = train['categories']
 
     #get data
-    urls = np.random.choice(etl.get_app_urls(sitemap), max_app) #only get a portion of apps
-    etl.get_smali_code(urls, train_outpath)
+    apps = etl.get_app_urls(sitemap, cat, num) #only get a portion of apps
+    etl.download_apk(apps[:num], train_outpath, cat[0])
+    etl.download_apk(apps[num:], train_outpath, cat[1])
     etl.clean_disk(train_outpath)
     
     #feature extraction
-    apps = os.listdir(train_outpath)
-    df = etl.extract_simple_feat(apps)
+    df1 = etl.extract_simple_feat(os.listdir(train_outpath+'/'+cat[0]))
+    df2 = etl.extract_simple_feat(os.listdir(train_outpath+'/'+cat[1]))
+    app_df = pd.concat([df1,df2])
     
     #parse configuration for test
     test = json.load('config/test-params.json')
     test_outpath = test['outpath']
-    max_app = test['max_app']
+    tnum = test['num']
 
     #get data for test
-    urls = np.random.choice(etl.get_app_urls(sitemap), max_app) #only get a portion of apps
-    etl.get_smali_code(urls, test_outpath)
+    apps = etl.get_app_urls(sitemap, cat, tnum) #only get a portion of apps
+    etl.download_apk(apps[:tnum], test_outpath, cat[0])
+    etl.download_apk(apps[tnum:], test_outpath, cat[1])
     etl.clean_disk(test_outpath)
     
-    #feature extraction for test
-    apps = os.listdir(test_outpath)
-    df2 = etl.extract_simple_feat(apps)
+    #feature extraction
+    df1 = etl.extract_simple_feat(os.listdir(test_outpath+'/'+cats[1]))
+    df2 = etl.extract_simple_feat(os.listdir(test_outpath+'/'+cats[2]))
+    test_df = pd.concat([df1,df2])
     
     #training and testing
-    pre = etl.cat_package()
-    fn_lr = etl.fn_LR(df, df2, pre)
-    fn_rf = etl.fn_RF(df, df2, pre)
-    fn_gbt = etl.fn_GBT(df, df2, pre)
+    pre = etl.cat_package(app_df)
+    fn_lr = etl.fn_LR(app_df, test_df, pre)
+    fn_rf = etl.fn_RF(app_df, test_df, pre)
+    fn_gbt = etl.fn_GBT(app_df, test_df, pre)
     

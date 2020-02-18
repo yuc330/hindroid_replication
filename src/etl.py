@@ -74,62 +74,54 @@ def get_app_urls(sitemap,cat,number):
 
 #part3.2 Download and decompile apk files
 
-def get_download_page(app_link): #get download page of an app
-    app_name = app_link.split('/')[-1]
-    if not os.path.exists(outpath+'/'):
-        os.mkdir(outpath+'/')
-    r = requests.get(app_link)
-    app_page = bs4.BeautifulSoup(r.text)
-    
-    #find download page
-    download_page_l = app_path + app_page.find('div', attrs={"class":"down"}).a['href']
-    return download_page_l
+def download_apk(app_urls, outpath, cat):
+    if not os.path.exists(outpath):
+        os.mkdir(outpath)
+    if not os.path.exists(outpath + '/' + cat):
+        os.mkdir(outpath + '/' + cat)
 
-def download_apk(download_page_link, app_link, outpath): #download the apk file
-    app_name = app_link.split('/')[-1]
-    r_download = requests.get(download_page_link)
-    download_page = bs4.BeautifulSoup(r_download.text)
-    
-    #get download link
-    download_link = download_page.find('div',attrs = {"class":"fast-download-box fast-bottom"}).a['href']
-    r = requests.get(download_link)
-    apkfile = r.content
-    
-    #download an save in outpath directory
-    path = os.path.join(outpath +'/', app_name +".apk")
-    with open(path, 'wb') as f:
-            f.write(apkfile)
-
-def decompile(app_link, outpath): #decompile apk files and remove .apk
-    app_name = app_link.split('/')[-1]
-    subprocess.call(['cd', outpath]) 
-    name = os.path.join(outpath+'/', link.split('/')[-1]+".apk") 
-    subprocess.call(['apktool', 'd', name])
-    if os.path.exists(name +".apk"): #delete apkfiles
-        os.remove(name +".apk")
-
-def get_smali_code(app_urls, outpath): #download and decompile all application urls
     for url in app_urls:
-        page = get_download_page(url)
-        download_apk(page, url, outpath)
-        decompile(url, outpath)
+        download_link = url + '/download?from=details'
+        r1 = requests.get(download_link)
+        soup = BeautifulSoup(r1.text)
+        try:
+            download_link_file = soup.find('div',attrs = {"class":"fast-download-box fast-bottom"}).find('p',attrs = {'class':'down-click'}).find('a',href = True)['href']
+        except:
+            continue
+        r2 = requests.get(download_link_file)
+        apkfile = r2.content
+        complete_name = os.path.join(outpath+'/'+cat+'/', url.split('/')[-1]+".apk")
+        out_name = os.path.join(outpath+'/'+cat+'/', url.split('/')[-1])
+        with open(complete_name, 'wb') as fh:
+            fh.write(apkfile)
+        subprocess.call(['apktool', 'd', outpath+'/'+cat+'/'+url.split('/')[-1]+".apk", '-o',out_name])
 
+        
 #part3.3 organize disk
 
-def clean_app_folder(app_path): #remove anything that is not smali
-    subs = os.listdir(app_path)
-    for s in subs:
-        if s not in ['smali', 'AndroidManifest.xml']:
-            path = app_path+'/'+s
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            elif os.path.isfile(path):
-                os.remove(path)
+def clean_app_folder(app_path):
+    if '.DS_Store' not in app_path:
+        if os.path.isdir(app_path):
+            subs = os.listdir(app_path)
+            for s in subs:
+                if s not in ['smali', 'AndroidManifest.xml']:
+                    path = app_path+'/'+s
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    elif os.path.isfile(path):
+                        os.remove(path)
+        else:
+            os.remove(app_path)
 
-def clean_disk(outpath): #run through all the app files
-    apps = os.listdir(outpath)
-    for app in apps:
-        clean_app_folder(app)
+def clean_disk(outpath):
+    folders = os.listdir(outpath)
+    for f in folders:
+        if os.path.isdir(outpath+'/'+f):
+            apps = os.listdir(outpath+'/'+f)
+            for app in apps:
+                clean_app_folder(outpath+'/'+f+'/'+app)
+        else:
+            os.remove(outpath+'/'+f)
         
         
 #extract feature
@@ -228,12 +220,22 @@ def extract_simple_feat(apps):
 
 #model training
 
-def cat_package():
+def cat_package(X):
+    imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+    imp2 = SimpleImputer(missing_values=np.NaN, strategy='mean')
+
     cat_feat = ['most_used_package']
     cat_trans = Pipeline(steps=[
         ('onehot', OneHotEncoder())
         ])
-    return ColumnTransformer(transformers=[('cat', cat_trans,cat_feat)])
+
+    imp_feat = [i for i in X.columns.values if i != 'dating']
+    imp_trans = Pipeline(steps=[
+        ('impute1', imp),
+        ('impute2', imp2),
+        ])
+
+    return ColumnTransformer(transformers=[('cat', cat_trans,cat_feat), ('imp', imp_trans,imp_feat)])
 
 def fn_LR(df_train, df_test, pre):
     X = df_train.drop('malware', 1)
