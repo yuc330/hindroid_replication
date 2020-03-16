@@ -153,26 +153,32 @@ def construct_P(apis):
 
 # construct all
 
-def construct_matrices(app_smalis, test_app_smalis = None):
+def construct_matrices(app_smalis, test_app_smalis):
     """
     construct matrices A, A_test, B, and P
 
     Args:
         app_smalis - list of list of smali files to construct from
-        test_app_smalis - list of list of testing smali fils to construct A_test, default none
+        test_app_smalis - list of list of testing smali fils to construct A_test
         
     """
     smalis = pd.DataFrame(app_smalis)
     apis = smalis.apply(smali2apis, axis = 1)
+    print('constructing A...')
     A, all_apis = construct_A(apis)
-    if not(test_app_smalis is None):
-        test_smalis = pd.DataFrame(test_app_smalis)
-        test_apis = test_smalis.apply(smali2apis, axis = 1)
-        A_test = construct_A_test(test_apis, all_apis)
-    else:
-        A_test = None
+    print('finish A construction')
+    test_smalis = pd.DataFrame(test_app_smalis)
+    test_apis = test_smalis.apply(smali2apis, axis = 1)
+    print('constructing A_test...')
+    A_test = construct_A_test(test_apis, all_apis)
+    print('finish A_test construction')
+    
+    print('constructing B...')
     B = construct_B(smalis)
+    print('finish B construction')
+    print('constructing P...')
     P = construct_P(all_apis)
+    print('finish p construction')
     return A, A_test, B, P
 
 def save_matrix_to_file(mat, path):

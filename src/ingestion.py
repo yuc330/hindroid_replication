@@ -6,6 +6,7 @@ import subprocess
 import numpy as np
 import random
 from bs4 import BeautifulSoup
+from multiprocessing import Pool
 
 
 #Part3.1 Create sample of android apps
@@ -168,9 +169,11 @@ def clean_disk(outpath):
     folders = os.listdir(outpath)
     for f in folders:
         if os.path.isdir(outpath+'/'+f):
-            apps = os.listdir(outpath+'/'+f)
-            for app in apps:
-                clean_app_folder(outpath+'/'+f+'/'+app)
+            apps = [outpath+'/'+f+'/'+a for a in os.listdir(outpath+'/'+f)]
+            pool = Pool(os.cpu_count())                 
+            pool.map(clean_app_folder, apps)
+            pool.close()
+  
         else:
             os.remove(outpath+'/'+f)
         

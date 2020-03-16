@@ -3,6 +3,7 @@ import glob, os, shutil
 import gzip
 import numpy as np
 import pandas as pd
+from multiprocessing import Pool
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier,GradientBoostingClassifier
@@ -42,6 +43,16 @@ def smalis_from_paths(paths):
         
     """
     return [open(p, 'r').read() for p in paths]
+
+def process_smali(path):
+    """
+    with the path of an app, get all smali files
+    
+    Args:
+        paths - the path of app
+        
+    """
+    return smalis_from_paths(get_smali_paths(path))
 
 def find_blocks(smali):
     """
@@ -127,6 +138,18 @@ def basic_stats(smalis):
 
 
 
+def process_feat(app):
+    """
+    given smali files of an app, return its basic features
+    
+    Args:
+        app - series of smali files of an app
+        
+    """
+    na, ua, nb, ub, mp = basic_stats(app)
+    return [na, ua, nb, ub, mp]
+    
+    
 def extract_simple_feat(smalis, y, y_col = 'malware'):
     """
     given a dataframe of smali files of apps, output dataframe of the simple features of app
@@ -142,22 +165,14 @@ def extract_simple_feat(smalis, y, y_col = 'malware'):
     num_methods = []
     unique_methods = []
     most_used_package = []
-    for app in smalis: #extract features
-        na, ua, nb, ub, mp = basic_stats(app)
-        num_apis.append(na)
-        unique_apis.append(ua)
-        num_methods.append(nb)
-        unique_methods.append(ub)
-        most_used_package.append(mp)
+    
         
-    df = pd.DataFrame({
-        'num_api':num_apis,
-        'unique_api':unique_apis,
-        'num_method':num_methods,
-        'unique_method':unique_methods,
-        'most_used_package':most_used_package,
-         y_col: [y]*len(most_used_package)
-    })
+    pool = Pool(os.cpu_count())                 
+    mat = pool.map(process_feat, smalis)
+    pool.close()
+        
+    df = pd.DataFrame(mat, columns = ['num_api', 'unique_api', 'num_method', 'unique_method', 'most_used_package'])
+    df[y_col] = y
     return df
 
 #model training

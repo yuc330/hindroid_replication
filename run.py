@@ -2,6 +2,8 @@ import numpy as np
 import warnings
 import sys
 import json
+from multiprocessing import Pool
+import os
 from src.ingestion import *
 from src.baseline import *
 from src.matrix import *
@@ -58,8 +60,12 @@ def main(targets):
         
         #turn to smali strings
         print('retrieving smali files...')
-        benign_smalis = [smalis_from_paths(get_smali_paths(p)) for p in benign_paths]
-        malware_smalis = [smalis_from_paths(get_smali_paths(p)) for p in malware_paths]
+        pool = Pool(os.cpu_count())                 
+        benign_smalis = pool.map(process_smali, benign_paths)
+        pool.close()
+        pool = Pool(os.cpu_count())                 
+        malware_smalis = pool.map(process_smali, malware_paths)
+        pool.close()
         smalis, y = get_Xy(benign_smalis, malware_smalis)
         apis = smalis.apply(smali2apis, axis = 1)
         print('smali files retrieved')
@@ -89,8 +95,12 @@ def main(targets):
         
         #turn to smali strings
         print('retrieving smali files...')
-        benign_smalis = [smalis_from_paths(get_smali_paths(p)) for p in benign_paths]
-        malware_smalis = [smalis_from_paths(get_smali_paths(p)) for p in malware_paths]
+        pool = Pool(os.cpu_count())                 
+        benign_smalis = pool.map(process_smali, benign_paths)
+        pool.close()
+        pool = Pool(os.cpu_count())                 
+        malware_smalis = pool.map(process_smali, malware_paths)
+        pool.close()
         smalis, y = get_Xy(benign_smalis, malware_smalis)
         print('smali files retrieved')
         
@@ -116,12 +126,12 @@ def main(targets):
         #download app
         benign_urls = get_app_urls(sitemap,cat,num)
         print('start downloading...')
-        #download_apk(benign_urls, outpath, subpath)
+        download_apk(benign_urls, outpath, subpath)
         print('finish downloading')
 
         #keep smali
         print('keeping only smali files...')
-        #clean_disk(outpath)
+        clean_disk(outpath)
         print('finish cleaning disk')
         
         #get app paths
@@ -132,8 +142,12 @@ def main(targets):
         
         #turn to smali strings
         print('retrieving smali files...')
-        benign_smalis = [smalis_from_paths(get_smali_paths(p)) for p in benign_paths]
-        malware_smalis = [smalis_from_paths(get_smali_paths(p)) for p in malware_paths]
+        pool = Pool(os.cpu_count())                 
+        benign_smalis = pool.map(process_smali, benign_paths)
+        pool.close()
+        pool = Pool(os.cpu_count())                 
+        malware_smalis = pool.map(process_smali, malware_paths)
+        pool.close()
         smalis, y = get_Xy(benign_smalis, malware_smalis)
         apis = smalis.apply(smali2apis, axis = 1)
         print('smali files retrieved')

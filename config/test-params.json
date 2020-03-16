@@ -2,7 +2,7 @@
     "sitemap": "https://apkpure.com/sitemap.xml",
     "malware": "/datasets/dsc180a-wi20-public/Malware/amd_data_smali",
     "outpath": "data",
-    "subpath": "testing",
+    "subpath": "test-project",
     "categories": 5,
     "num": 2,
     "mal_num":10
