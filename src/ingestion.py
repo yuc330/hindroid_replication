@@ -4,12 +4,20 @@ import glob, os, shutil
 import gzip
 import subprocess
 import numpy as np
+import random
 from bs4 import BeautifulSoup
 
 
 #Part3.1 Create sample of android apps
 
 def get_submap_xmls(sitemap):
+    """
+    given the url of sitemap for android app, retrieve the urls of sub-sitemaps
+
+    Args:
+        sitemap - url of sitemap
+        
+    """
     resp = requests.get(sitemap)
     soup = BeautifulSoup(resp.content, 'xml')
     url = soup.find_all('loc') 
@@ -17,8 +25,16 @@ def get_submap_xmls(sitemap):
     for link in url:
         result += [link.get_text()]
     return result
+
 #extract categories list
 def category(link_lst):
+    """
+    given a list of sub-sitemaps, retrieve all possible categories
+
+    Args:
+       link_lst - list of urls for sub-sitemaps 
+        
+    """
     result = [] 
     for xml in link_lst:
         result += [re.search('(?<=sitemaps\/)(.*)(?=\-\d)|(?<=sitemaps\/)(.*)(?=\.xml)',xml).groups()[1]]
@@ -27,6 +43,13 @@ def category(link_lst):
 
 #get all the gz files from each categories
 def sample_from_cat(categories): 
+    """
+    given a list of categories, retrieve all urls of apps in the categories
+
+    Args:
+        categories - list of categories
+        
+    """
     soups = []
     for c in categories:
         url = 'https://apkpure.com/sitemaps/{}.xml.gz'.format(c)
@@ -40,15 +63,25 @@ def sample_from_cat(categories):
         soup = BeautifulSoup(data,features = 'lxml')
         soups.append(soup)
     return soups
+
 def get_app_urls(sitemap,cat,number):
+    """
+    create a list of app urls to download later
+
+    Args:
+        sitemap - url of the sitemap
+        cat - categories to get app urls
+        number - number of app urls to get for each category
+        
+    """
     xmls = get_submap_xmls(sitemap)
     
     if cat == 'all':
-        categories = category(xmls)
+        categories = category(xmls) #retrieve urls for all categories
     elif type(cat) == int:
-        categories = random.choices(category(xmls), k = cat)
+        categories = random.choices(category(xmls), k = cat) #retrieve urls for a number of categories randomly sampled
     else:
-        categories = cat
+        categories = cat #a list of categories given
         
     soups = sample_from_cat(categories)
     apps = []
@@ -69,6 +102,15 @@ def get_app_urls(sitemap,cat,number):
 #part3.2 Download and decompile apk files
 
 def download_apk(app_urls, outpath, cat):
+    """
+    download and decompile apps given urls and paths
+
+    Args:
+        app_urls - a list of app urls to be downloaded from
+        outpath - the path to store downloaded apps
+        cat - the category, or subpath, that the apps are stored in outpath
+        
+    """
     if not os.path.exists(outpath):
         os.mkdir(outpath)
     if not os.path.exists(outpath + '/' + cat):
@@ -88,12 +130,20 @@ def download_apk(app_urls, outpath, cat):
         out_name = os.path.join(outpath+'/'+cat+'/', url.split('/')[-1])
         with open(complete_name, 'wb') as fh:
             fh.write(apkfile)
+        #decompile apps
         subprocess.call(['apktool', 'd', outpath+'/'+cat+'/'+url.split('/')[-1]+".apk", '-o',out_name])
 
         
 #part3.3 organize disk
 
 def clean_app_folder(app_path):
+    """
+    remove all files except for smali files and AndroidManifest.xml in the folder
+
+    Args:
+        app_path - path of the folder to be cleaned
+        
+    """
     if '.DS_Store' not in app_path:
         if os.path.isdir(app_path):
             subs = os.listdir(app_path)
@@ -108,6 +158,13 @@ def clean_app_folder(app_path):
             os.remove(app_path)
 
 def clean_disk(outpath):
+    """
+    remove all files except for smali files and AndroidManifest.xml in the app folders in the folder
+
+    Args:
+        outpath - path of the folder whose sub-app folders to be cleaned
+        
+    """
     folders = os.listdir(outpath)
     for f in folders:
         if os.path.isdir(outpath+'/'+f):
@@ -120,13 +177,35 @@ def clean_disk(outpath):
         
 #extract smalis
 
-def get_smali_paths(app_path): #create a list of smali file paths from app path
-    smalis = []
-    for d, dirs, files in os.walk(app_path + '/smali/'):
-        for file in files:
-            if file.endswith('smali'):
-                smalis.append(os.path.join(d, file))
-    return smalis
+def get_benign_paths(outpath, cat='analysis'):
+    """
+    get all the paths of apps in the sub-folder in outpath folder in a list
 
-def smalis_from_paths(paths): #create list of smali texts from list of paths
-    return [open(p, 'r').read() for p in paths]
+    Args:
+        outpath - path where all data is stored
+        cat - sub folder in outpath folder where app folders are stored, default analysis
+        
+    """
+    return [outpath+'/'+cat+'/'+ d for d in os.listdir(outpath+'/'+cat)]
+
+def get_malware_paths(malware_path, num):
+    """
+    get a number of malware paths given the parent folder of the malwares
+
+    Args:
+        malware_path - parent folder of the malwares
+        num - number of malwares to get
+        
+    """
+    paths = []
+    count = 0
+    for d, dirs, files in os.walk(malware_path):
+        for subd in dirs:
+            if subd == 'smali' and count < num:
+                paths.append(d)
+                count += 1
+            if count > num:
+                break
+    return paths
+
+
