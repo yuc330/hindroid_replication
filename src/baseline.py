@@ -54,6 +54,32 @@ def process_smali(path):
     """
     return smalis_from_paths(get_smali_paths(path))
 
+def retrieve_smalis(paths):
+    """
+    with the paths of an app, get all smali files for all apps
+    
+    Args:
+        paths - the paths of app
+        
+    """
+    pool = Pool(os.cpu_count())                 
+    smalis = pool.map(process_smali, paths)
+    pool.close()
+    return smalis
+
+def save_description(df, y_col0 = 'benign', y_col1 = 'malware'):
+    """
+    with dataframe of simple features defined, save mean values classified by type
+    
+    Args:
+        df - the dataframe of simple features of app
+        y_col0 - the label for value 0, default benign
+        y_col1 - the label for value 1, default malware
+        
+    """
+    df_wona = df[df['num_api']!=0]
+    df_wona.groupby(y_col1).mean().rename(index={0: y_col0, 1: y_col1}).to_csv(os.path.join('output', 'EDA.csv'))
+
 def find_blocks(smali):
     """
     find all code blocks and return them as a list given a smali string
@@ -275,7 +301,7 @@ def save_baseline_result(lr, rf, gbt):
         
     """
     baseline_result = pd.DataFrame([lr, rf, gbt], columns=['tn', 'fp', 'fn', 'tp', 'acc', 'fnr'], index = np.array(['logistic regression', 'random forest', 'gradient boost']))
-    baseline_result.to_csv(os.path.join('output', 'baseline_result.txt'))
+    baseline_result.to_csv(os.path.join('output', 'baseline_result.csv'))
     
 def baseline_model(df, y_col = 'malware', test_size=0.33):
     """

@@ -60,12 +60,8 @@ def main(targets):
         
         #turn to smali strings
         print('retrieving smali files...')
-        pool = Pool(os.cpu_count())                 
-        benign_smalis = pool.map(process_smali, benign_paths)
-        pool.close()
-        pool = Pool(os.cpu_count())                 
-        malware_smalis = pool.map(process_smali, malware_paths)
-        pool.close()
+        benign_smalis = retrieve_smalis(benign_paths)                
+        malware_smalis = retrieve_smalis(malware_paths)
         smalis, y = get_Xy(benign_smalis, malware_smalis)
         apis = smalis.apply(smali2apis, axis = 1)
         print('smali files retrieved')
@@ -74,10 +70,9 @@ def main(targets):
         df_benign = extract_simple_feat(benign_smalis, 0)
         df_malware = extract_simple_feat(malware_smalis, 1)
         df = pd.concat([df_benign, df_malware])
-        df_wona = df[df['num_api']!=0]
-        df_wona.describe().to_csv(os.path.join('output', 'EDA.txt'))
+        save_description(df)
         print('basic stats saved to output directory')
-        baseline_model(df_wona)
+        baseline_model(df[df['num_api']!=0])
 
     if 'model' in targets:
         if not os.path.exists('output'):
@@ -95,12 +90,8 @@ def main(targets):
         
         #turn to smali strings
         print('retrieving smali files...')
-        pool = Pool(os.cpu_count())                 
-        benign_smalis = pool.map(process_smali, benign_paths)
-        pool.close()
-        pool = Pool(os.cpu_count())                 
-        malware_smalis = pool.map(process_smali, malware_paths)
-        pool.close()
+        benign_smalis = retrieve_smalis(benign_paths)                
+        malware_smalis = retrieve_smalis(malware_paths)
         smalis, y = get_Xy(benign_smalis, malware_smalis)
         print('smali files retrieved')
         
@@ -142,26 +133,22 @@ def main(targets):
         
         #turn to smali strings
         print('retrieving smali files...')
-        pool = Pool(os.cpu_count())                 
-        benign_smalis = pool.map(process_smali, benign_paths)
-        pool.close()
-        pool = Pool(os.cpu_count())                 
-        malware_smalis = pool.map(process_smali, malware_paths)
-        pool.close()
+        benign_smalis = retrieve_smalis(benign_paths)                
+        malware_smalis = retrieve_smalis(malware_paths)
         smalis, y = get_Xy(benign_smalis, malware_smalis)
         apis = smalis.apply(smali2apis, axis = 1)
         print('smali files retrieved')
         
         #start EDA and baseline model
+        print('start extracting simple features')
         df_benign = extract_simple_feat(benign_smalis, 0)
         df_malware = extract_simple_feat(malware_smalis, 1)
         df = pd.concat([df_benign, df_malware])
-        df_wona = df[df['num_api']!=0]
-        df_wona.describe().to_csv(os.path.join('output', 'EDA.txt'))
+        save_description(df)
         print('basic stats saved to output directory')
-        baseline_model(df_wona)
+        baseline_model(df[df['num_api']!=0])
         
-        #train models
+        #construct matrices, kernels, and train SVMs
         kernel_models(smalis, y)
 
 if __name__ == "__main__":

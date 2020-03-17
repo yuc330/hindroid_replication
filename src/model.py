@@ -116,6 +116,6 @@ def kernel_models(smalis, y):
     train_df = pd.DataFrame(train, columns=['tn', 'fp', 'fn', 'tp', 'acc', 'fnr'], index = np.array(['AA^t', 'ABA^t', 'APA^t', 'APBP^tA^t']))
     test_df = pd.DataFrame(test, columns=['tn', 'fp', 'fn', 'tp', 'acc', 'fnr'], index = np.array(['AA^t', 'ABA^t', 'APA^t', 'APBP^tA^t']))
     
-    train_df.to_csv(os.path.join('output', 'train_result.txt'))
-    test_df.to_csv(os.path.join('output', 'test_result.txt'))
+    train_df.to_csv(os.path.join('output', 'train_result.csv'))
+    test_df.to_csv(os.path.join('output', 'test_result.csv'))
     print('train and test result saved to output directory')

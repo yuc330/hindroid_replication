@@ -122,7 +122,7 @@ def construct_B(smalis):
     blocks = smalis.apply(smali2blocks, axis = 1).explode() #get a series of blocks
     blocks.dropna().apply(block2apis) #update B_dict
     mlb = MultiLabelBinarizer(sparse_output = True)
-    return mlb.fit_transform(B_dict.values())
+    return mlb.fit_transform(pd.Series(B_dict))
 
 #functions for P
 def package(api):
