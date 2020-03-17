@@ -20,9 +20,31 @@ def get_Xy(cat1, cat2, y_col = 'malware'):
     df1[y_col] = 0
     df2 = pd.DataFrame(cat2)
     df2[y_col] = 1
-    all_df = pd.concat([df1, df2])
+    all_df = pd.concat([df1, df2]).dropna(how='all')
     smalis = all_df.drop(y_col,1)
     y = all_df[y_col]
+    
+    #store mediate files
+    if not os.path.exists('mediate'):
+        os.mkdir('mediate')
+    with open('mediate/y.txt', 'w') as f:
+        for item in y:
+            f.write("%s\n" % item)
+    smalis.to_csv('mediate/smalis.csv', index = False)
+    
+    return smalis, y
+
+def get_Xy_fromfile():
+    """
+    read already saved smalis dataframe and list of labels from mediate folder
+
+    Args:
+        none
+        
+    """
+    with open('mediate/y.txt') as f:
+        y = f.read().splitlines()
+    smalis = pd.read_csv('mediate/smalis.csv')
     return smalis, y
 
 # functions for A

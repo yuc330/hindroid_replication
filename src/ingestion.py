@@ -189,7 +189,15 @@ def get_benign_paths(outpath, cat='analysis'):
         cat - sub folder in outpath folder where app folders are stored, default analysis
         
     """
-    return [outpath+'/'+cat+'/'+ d for d in os.listdir(outpath+'/'+cat)]
+    paths = [outpath+'/'+cat+'/'+ d for d in os.listdir(outpath+'/'+cat)]
+    
+    #store mediate files
+    if not os.path.exists('mediate'):
+        os.mkdir('mediate')
+    with open('mediate/benign_paths.txt', 'w') as f:
+        for item in paths:
+            f.write("%s\n" % item)
+    return paths
 
 def get_malware_paths(malware_path, num):
     """
@@ -209,6 +217,28 @@ def get_malware_paths(malware_path, num):
                 count += 1
             if count > num:
                 break
+                
+    #store mediate files
+    if not os.path.exists('mediate'):
+        os.mkdir('mediate')
+    with open('mediate/malware_paths.txt', 'w') as f:
+        for item in paths:
+            f.write("%s\n" % item)
     return paths
+
+def get_all_paths_fromfile():
+    """
+    read all smalis paths already saved in mediate folder
+    
+    Args:
+        none
+        
+    """
+    with open('benign_paths.txt') as f:
+        benign_paths = f.read().splitlines()
+    with open('malware_paths.txt') as f:
+        malware_paths = f.read().splitlines()
+    return benign_paths, malware_paths
+
 
 

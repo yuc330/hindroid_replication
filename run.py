@@ -2,7 +2,6 @@ import numpy as np
 import warnings
 import sys
 import json
-from multiprocessing import Pool
 import os
 from src.ingestion import *
 from src.baseline import *
@@ -84,15 +83,12 @@ def main(targets):
         
         #get app paths
         print('retrieving app paths...')
-        benign_paths = get_benign_paths(outpath, cat='analysis')
-        malware_paths = get_malware_paths(mal_path, mal_num)
+        benign_paths, malware_paths = get_all_paths_fromfile()
         print('app paths retrieved')
         
         #turn to smali strings
         print('retrieving smali files...')
-        benign_smalis = retrieve_smalis(benign_paths)                
-        malware_smalis = retrieve_smalis(malware_paths)
-        smalis, y = get_Xy(benign_smalis, malware_smalis)
+        smalis, y = get_Xy_fromfile()
         print('smali files retrieved')
         
         
